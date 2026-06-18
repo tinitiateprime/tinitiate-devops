@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">GitHub Actions repository variable screen</title>
+  <desc id="desc">Instructional mock screen showing where to add AWS_GITHUB_ACTIONS_ROLE_ARN in GitHub.</desc>
+  <rect width="1200" height="720" fill="#f6f8fa"/>
+  <rect width="1200" height="58" fill="#24292f"/>
+  <text x="28" y="37" fill="#ffffff" font-family="Arial, sans-serif" font-size="22" font-weight="700">GitHub Repository Settings</text>
+  <rect x="0" y="58" width="260" height="662" fill="#ffffff"/>
+  <text x="30" y="110" fill="#111827" font-family="Arial, sans-serif" font-size="18" font-weight="700">Settings</text>
+  <rect x="20" y="168" width="220" height="40" rx="4" fill="#ddf4ff"/>
+  <text x="38" y="193" fill="#0969da" font-family="Arial, sans-serif" font-size="15" font-weight="700">Secrets and variables</text>
+  <text x="38" y="240" fill="#374151" font-family="Arial, sans-serif" font-size="15">Actions</text>
+  <text x="300" y="112" fill="#111827" font-family="Arial, sans-serif" font-size="30" font-weight="700">Actions variables</text>
+  <rect x="300" y="155" width="820" height="410" rx="8" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="330" y="205" fill="#111827" font-family="Arial, sans-serif" font-size="19" font-weight="700">New repository variable</text>
+  <text x="330" y="255" fill="#374151" font-family="Arial, sans-serif" font-size="16">Name</text>
+  <rect x="330" y="275" width="700" height="42" rx="5" fill="#f6f8fa" stroke="#8c959f"/>
+  <text x="350" y="302" fill="#111827" font-family="Consolas, monospace" font-size="16">AWS_GITHUB_ACTIONS_ROLE_ARN</text>
+  <text x="330" y="365" fill="#374151" font-family="Arial, sans-serif" font-size="16">Value</text>
+  <rect x="330" y="385" width="700" height="42" rx="5" fill="#f6f8fa" stroke="#8c959f"/>
+  <text x="350" y="412" fill="#111827" font-family="Consolas, monospace" font-size="16">arn:aws:iam::123456789012:role/github-actions-aws-deploy-role</text>
+  <rect x="330" y="475" width="155" height="42" rx="6" fill="#2da44e"/>
+  <text x="365" y="502" fill="#ffffff" font-family="Arial, sans-serif" font-size="16" font-weight="700">Add variable</text>
+  <rect x="300" y="610" width="820" height="50" rx="6" fill="#fff8c5" stroke="#bf8700"/>
+  <text x="325" y="642" fill="#7d4e00" font-family="Arial, sans-serif" font-size="16">Use a variable for the role ARN. Do not store AWS access keys for this project.</text>
+</svg>

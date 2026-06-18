@@ -1,0 +1,92 @@
+name: AWS - Deploy Lambda From GitHub
+
+on:
+  workflow_dispatch:
+    inputs:
+      function_name:
+        description: Lambda function name
+        required: true
+        type: string
+      aws_region:
+        description: AWS region
+        required: true
+        default: us-east-1
+        type: string
+      lambda_source_dir:
+        description: Directory containing Lambda code
+        required: true
+        default: lambda
+        type: string
+      runtime:
+        description: Runtime used only when creating a new function
+        required: true
+        default: python3.12
+        type: string
+      handler:
+        description: Handler used only when creating a new function
+        required: true
+        default: app.lambda_handler
+        type: string
+      lambda_role_arn:
+        description: Execution role ARN used only when creating a new function
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-lambda:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Package Lambda code
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SOURCE_DIR="${{ inputs.lambda_source_dir }}"
+
+          if [ ! -d "$SOURCE_DIR" ]; then
+            echo "Lambda source directory does not exist: $SOURCE_DIR"
+            exit 1
+          fi
+
+          cd "$SOURCE_DIR"
+          zip -r ../lambda-package.zip .
+
+      - name: Create or update Lambda function
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          FUNCTION_NAME="${{ inputs.function_name }}"
+
+          if aws lambda get-function --function-name "$FUNCTION_NAME" >/dev/null 2>&1; then
+            aws lambda update-function-code \
+              --function-name "$FUNCTION_NAME" \
+              --zip-file fileb://lambda-package.zip
+
+            aws lambda wait function-updated --function-name "$FUNCTION_NAME"
+          else
+            aws lambda create-function \
+              --function-name "$FUNCTION_NAME" \
+              --runtime "${{ inputs.runtime }}" \
+              --role "${{ inputs.lambda_role_arn }}" \
+              --handler "${{ inputs.handler }}" \
+              --zip-file fileb://lambda-package.zip \
+              --timeout 60 \
+              --memory-size 256
+
+            aws lambda wait function-active --function-name "$FUNCTION_NAME"
+          fi

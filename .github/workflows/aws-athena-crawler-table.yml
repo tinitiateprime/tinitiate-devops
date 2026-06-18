@@ -1,0 +1,155 @@
+name: AWS - Create Glue Crawler and Athena Table
+
+on:
+  workflow_dispatch:
+    inputs:
+      aws_region:
+        description: AWS region
+        required: true
+        default: us-east-1
+        type: string
+      database_name:
+        description: Glue Data Catalog database name
+        required: true
+        type: string
+      table_name:
+        description: Glue table name queried by Athena
+        required: true
+        type: string
+      data_s3_location:
+        description: S3 data location, for example s3://bucket/gold/sales/
+        required: true
+        type: string
+      crawler_name:
+        description: Glue crawler name
+        required: true
+        type: string
+      crawler_role_arn:
+        description: IAM role ARN used by the crawler
+        required: true
+        type: string
+      create_example_table:
+        description: Create an example external table with id/name/created_at columns
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  create-athena-catalog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Create Glue database if needed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DB_NAME="${{ inputs.database_name }}"
+
+          if aws glue get-database --name "$DB_NAME" >/dev/null 2>&1; then
+            echo "Database already exists: $DB_NAME"
+          else
+            aws glue create-database \
+              --database-input "Name=$DB_NAME,Description=Database for Athena tables"
+          fi
+
+      - name: Create or update Glue crawler
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CRAWLER_NAME="${{ inputs.crawler_name }}"
+          DB_NAME="${{ inputs.database_name }}"
+          DATA_LOCATION="${{ inputs.data_s3_location }}"
+
+          cat > crawler-targets.json <<EOF
+          {
+            "S3Targets": [
+              {
+                "Path": "$DATA_LOCATION"
+              }
+            ]
+          }
+          EOF
+
+          if aws glue get-crawler --name "$CRAWLER_NAME" >/dev/null 2>&1; then
+            aws glue update-crawler \
+              --name "$CRAWLER_NAME" \
+              --role "${{ inputs.crawler_role_arn }}" \
+              --database-name "$DB_NAME" \
+              --targets file://crawler-targets.json
+          else
+            aws glue create-crawler \
+              --name "$CRAWLER_NAME" \
+              --role "${{ inputs.crawler_role_arn }}" \
+              --database-name "$DB_NAME" \
+              --targets file://crawler-targets.json
+          fi
+
+      - name: Create example Glue table for Athena
+        if: ${{ inputs.create_example_table }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DB_NAME="${{ inputs.database_name }}"
+          TABLE_NAME="${{ inputs.table_name }}"
+          DATA_LOCATION="${{ inputs.data_s3_location }}"
+
+          cat > table-input.json <<EOF
+          {
+            "Name": "$TABLE_NAME",
+            "TableType": "EXTERNAL_TABLE",
+            "Parameters": {
+              "classification": "parquet",
+              "EXTERNAL": "TRUE"
+            },
+            "StorageDescriptor": {
+              "Columns": [
+                { "Name": "id", "Type": "string" },
+                { "Name": "name", "Type": "string" },
+                { "Name": "created_at", "Type": "timestamp" }
+              ],
+              "Location": "$DATA_LOCATION",
+              "InputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+              "OutputFormat": "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat",
+              "SerdeInfo": {
+                "SerializationLibrary": "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+              }
+            }
+          }
+          EOF
+
+          if aws glue get-table --database-name "$DB_NAME" --name "$TABLE_NAME" >/dev/null 2>&1; then
+            aws glue update-table \
+              --database-name "$DB_NAME" \
+              --table-input file://table-input.json
+          else
+            aws glue create-table \
+              --database-name "$DB_NAME" \
+              --table-input file://table-input.json
+          fi
+
+      - name: Start crawler
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CRAWLER_NAME="${{ inputs.crawler_name }}"
+
+          aws glue start-crawler --name "$CRAWLER_NAME" || {
+            echo "Crawler may already be running: $CRAWLER_NAME"
+          }

@@ -1,0 +1,156 @@
+name: AWS - Deploy Glue Job From GitHub
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_name:
+        description: Glue job name
+        required: true
+        type: string
+      aws_region:
+        description: AWS region
+        required: true
+        default: us-east-1
+        type: string
+      glue_script_path:
+        description: Local Glue script path in the repository
+        required: true
+        default: glue/jobs/sample_job.py
+        type: string
+      script_s3_bucket:
+        description: S3 bucket for Glue scripts
+        required: true
+        type: string
+      script_s3_prefix:
+        description: S3 prefix for Glue scripts
+        required: true
+        default: glue/scripts
+        type: string
+      input_path:
+        description: Input S3 path passed to the Glue job
+        required: false
+        default: ''
+        type: string
+      output_path:
+        description: Output S3 path passed to the Glue job
+        required: false
+        default: ''
+        type: string
+      glue_role_arn:
+        description: IAM role ARN used by the Glue job
+        required: true
+        type: string
+      glue_version:
+        description: Glue version
+        required: true
+        default: '4.0'
+        type: string
+      worker_type:
+        description: Glue worker type
+        required: true
+        default: G.1X
+        type: string
+      number_of_workers:
+        description: Number of Glue workers
+        required: true
+        default: '2'
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-glue-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Upload Glue script to S3
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SCRIPT_PATH="${{ inputs.glue_script_path }}"
+          BUCKET="${{ inputs.script_s3_bucket }}"
+          PREFIX="${{ inputs.script_s3_prefix }}"
+
+          if [ ! -f "$SCRIPT_PATH" ]; then
+            echo "Glue script does not exist: $SCRIPT_PATH"
+            exit 1
+          fi
+
+          SCRIPT_FILE="$(basename "$SCRIPT_PATH")"
+          S3_URI="s3://$BUCKET/$PREFIX/$SCRIPT_FILE"
+
+          aws s3 cp "$SCRIPT_PATH" "$S3_URI"
+          echo "GLUE_SCRIPT_S3_URI=$S3_URI" >> "$GITHUB_ENV"
+
+      - name: Create or update Glue job
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          JOB_NAME="${{ inputs.job_name }}"
+
+          cat > glue-command.json <<EOF
+          {
+            "Name": "glueetl",
+            "ScriptLocation": "$GLUE_SCRIPT_S3_URI",
+            "PythonVersion": "3"
+          }
+          EOF
+
+          cat > default-arguments.json <<EOF
+          {
+            "--enable-metrics": "true",
+            "--enable-continuous-cloudwatch-log": "true",
+            "--job-language": "python",
+            "--INPUT_PATH": "${{ inputs.input_path }}",
+            "--OUTPUT_PATH": "${{ inputs.output_path }}"
+          }
+          EOF
+
+          cat > job-update.json <<EOF
+          {
+            "Role": "${{ inputs.glue_role_arn }}",
+            "Command": {
+              "Name": "glueetl",
+              "ScriptLocation": "$GLUE_SCRIPT_S3_URI",
+              "PythonVersion": "3"
+            },
+            "GlueVersion": "${{ inputs.glue_version }}",
+            "WorkerType": "${{ inputs.worker_type }}",
+            "NumberOfWorkers": ${{ inputs.number_of_workers }},
+            "DefaultArguments": {
+              "--enable-metrics": "true",
+              "--enable-continuous-cloudwatch-log": "true",
+              "--job-language": "python",
+              "--INPUT_PATH": "${{ inputs.input_path }}",
+              "--OUTPUT_PATH": "${{ inputs.output_path }}"
+            }
+          }
+          EOF
+
+          if aws glue get-job --job-name "$JOB_NAME" >/dev/null 2>&1; then
+            aws glue update-job \
+              --job-name "$JOB_NAME" \
+              --job-update file://job-update.json
+          else
+            aws glue create-job \
+              --name "$JOB_NAME" \
+              --role "${{ inputs.glue_role_arn }}" \
+              --command file://glue-command.json \
+              --glue-version "${{ inputs.glue_version }}" \
+              --worker-type "${{ inputs.worker_type }}" \
+              --number-of-workers "${{ inputs.number_of_workers }}" \
+              --default-arguments file://default-arguments.json
+          fi

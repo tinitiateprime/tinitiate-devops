@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Athena validation screen</title>
+  <desc id="desc">Instructional mock screen showing Athena query validation for capstone project.</desc>
+  <rect width="1200" height="720" fill="#f6f7f9"/>
+  <rect width="1200" height="56" fill="#232f3e"/>
+  <text x="28" y="36" fill="#ffffff" font-family="Arial, sans-serif" font-size="22" font-weight="700">AWS Athena</text>
+  <text x="70" y="112" fill="#111827" font-family="Arial, sans-serif" font-size="30" font-weight="700">Validate curated claims table</text>
+  <rect x="70" y="150" width="1060" height="250" rx="8" fill="#111827"/>
+  <text x="100" y="195" fill="#e5e7eb" font-family="Consolas, monospace" font-size="18">SELECT COUNT(*) AS claim_count</text>
+  <text x="100" y="225" fill="#e5e7eb" font-family="Consolas, monospace" font-size="18">FROM enterprise_data_platform_dev.claims_silver;</text>
+  <text x="100" y="285" fill="#e5e7eb" font-family="Consolas, monospace" font-size="18">SELECT claim_status, COUNT(*)</text>
+  <text x="100" y="315" fill="#e5e7eb" font-family="Consolas, monospace" font-size="18">FROM enterprise_data_platform_dev.claims_silver</text>
+  <text x="100" y="345" fill="#e5e7eb" font-family="Consolas, monospace" font-size="18">GROUP BY claim_status;</text>
+  <rect x="70" y="430" width="1060" height="180" rx="8" fill="#ffffff" stroke="#d1d5db"/>
+  <text x="100" y="470" fill="#111827" font-family="Arial, sans-serif" font-size="21" font-weight="700">Expected results</text>
+  <text x="120" y="515" fill="#374151" font-family="Arial, sans-serif" font-size="18">claim_count = 5</text>
+  <text x="120" y="550" fill="#374151" font-family="Arial, sans-serif" font-size="18">APPROVED = 3, DENIED = 1, PENDING = 1</text>
+  <rect x="70" y="640" width="1060" height="45" rx="6" fill="#ecfdf5" stroke="#10b981"/>
+  <text x="98" y="669" fill="#065f46" font-family="Arial, sans-serif" font-size="16">Explain: raw data had 6 rows, but the Glue job removed one duplicate claim_id.</text>
+</svg>

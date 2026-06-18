@@ -1,0 +1,110 @@
+name: AWS - Create S3 Bucket and Prefix
+
+on:
+  workflow_dispatch:
+    inputs:
+      bucket_name:
+        description: S3 bucket name to create
+        required: true
+        type: string
+      aws_region:
+        description: AWS region
+        required: true
+        default: us-east-1
+        type: string
+      s3_prefix:
+        description: Optional folder-style prefix, for example raw/input/
+        required: false
+        default: ''
+        type: string
+      block_public_access:
+        description: Block public access on the bucket
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  create-s3:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Create bucket if needed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BUCKET="${{ inputs.bucket_name }}"
+          REGION="${{ inputs.aws_region }}"
+
+          if aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+            echo "Bucket already exists: $BUCKET"
+            exit 0
+          fi
+
+          if [ "$REGION" = "us-east-1" ]; then
+            aws s3api create-bucket --bucket "$BUCKET"
+          else
+            aws s3api create-bucket \
+              --bucket "$BUCKET" \
+              --region "$REGION" \
+              --create-bucket-configuration LocationConstraint="$REGION"
+          fi
+
+      - name: Configure secure bucket defaults
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BUCKET="${{ inputs.bucket_name }}"
+
+          aws s3api put-bucket-versioning \
+            --bucket "$BUCKET" \
+            --versioning-configuration Status=Enabled
+
+          aws s3api put-bucket-encryption \
+            --bucket "$BUCKET" \
+            --server-side-encryption-configuration '{
+              "Rules": [
+                {
+                  "ApplyServerSideEncryptionByDefault": {
+                    "SSEAlgorithm": "AES256"
+                  }
+                }
+              ]
+            }'
+
+          if [ "${{ inputs.block_public_access }}" = "true" ]; then
+            aws s3api put-public-access-block \
+              --bucket "$BUCKET" \
+              --public-access-block-configuration \
+              BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+          fi
+
+      - name: Create folder-style prefix if provided
+        if: ${{ inputs.s3_prefix != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BUCKET="${{ inputs.bucket_name }}"
+          PREFIX="${{ inputs.s3_prefix }}"
+
+          if [[ "$PREFIX" != */ ]]; then
+            PREFIX="$PREFIX/"
+          fi
+
+          aws s3api put-object --bucket "$BUCKET" --key "$PREFIX"
+          echo "Created s3://$BUCKET/$PREFIX"

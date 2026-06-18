@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">AWS IAM roles overview screen</title>
+  <desc id="desc">Instructional mock screen showing IAM navigation to roles, identity providers, and policies.</desc>
+  <rect width="1200" height="720" fill="#f6f7f9"/>
+  <rect x="0" y="0" width="1200" height="56" fill="#232f3e"/>
+  <text x="28" y="36" fill="#ffffff" font-family="Arial, sans-serif" font-size="22" font-weight="700">AWS Console</text>
+  <rect x="0" y="56" width="235" height="664" fill="#ffffff"/>
+  <text x="24" y="100" fill="#1f2937" font-family="Arial, sans-serif" font-size="20" font-weight="700">IAM</text>
+  <rect x="16" y="128" width="203" height="38" rx="4" fill="#eaf2ff"/>
+  <text x="32" y="153" fill="#0969da" font-family="Arial, sans-serif" font-size="16" font-weight="700">Roles</text>
+  <text x="32" y="204" fill="#374151" font-family="Arial, sans-serif" font-size="16">Policies</text>
+  <text x="32" y="246" fill="#374151" font-family="Arial, sans-serif" font-size="16">Identity providers</text>
+  <text x="32" y="288" fill="#374151" font-family="Arial, sans-serif" font-size="16">Users</text>
+  <text x="32" y="330" fill="#374151" font-family="Arial, sans-serif" font-size="16">Access Analyzer</text>
+  <text x="275" y="112" fill="#111827" font-family="Arial, sans-serif" font-size="32" font-weight="700">IAM roles needed for the capstone</text>
+  <text x="275" y="148" fill="#4b5563" font-family="Arial, sans-serif" font-size="18">Create or use separate roles for deployment, Lambda, Glue job, and Glue crawler.</text>
+  <rect x="275" y="190" width="860" height="86" rx="8" fill="#ffffff" stroke="#d1d5db"/>
+  <text x="302" y="225" fill="#111827" font-family="Arial, sans-serif" font-size="21" font-weight="700">1. github-actions-aws-deploy-role</text>
+  <text x="302" y="254" fill="#4b5563" font-family="Arial, sans-serif" font-size="16">Assumed by GitHub Actions through OIDC. Deploys S3, Lambda, Glue, and catalog resources.</text>
+  <rect x="275" y="300" width="860" height="86" rx="8" fill="#ffffff" stroke="#d1d5db"/>
+  <text x="302" y="335" fill="#111827" font-family="Arial, sans-serif" font-size="21" font-weight="700">2. lambda-claims-validator-role</text>
+  <text x="302" y="364" fill="#4b5563" font-family="Arial, sans-serif" font-size="16">Used by Lambda at runtime. Writes CloudWatch logs and optionally reads S3 objects.</text>
+  <rect x="275" y="410" width="860" height="86" rx="8" fill="#ffffff" stroke="#d1d5db"/>
+  <text x="302" y="445" fill="#111827" font-family="Arial, sans-serif" font-size="21" font-weight="700">3. glue-claims-etl-role</text>
+  <text x="302" y="474" fill="#4b5563" font-family="Arial, sans-serif" font-size="16">Used by Glue job and crawler. Reads bronze, writes silver, updates Glue Catalog, writes logs.</text>
+  <rect x="275" y="540" width="860" height="92" rx="8" fill="#fff7ed" stroke="#f97316"/>
+  <text x="302" y="576" fill="#9a3412" font-family="Arial, sans-serif" font-size="20" font-weight="700">Teaching point</text>
+  <text x="302" y="606" fill="#7c2d12" font-family="Arial, sans-serif" font-size="16">Do not use the root account or long-lived AWS access keys. Use roles, trust policies, and least privilege.</text>
+</svg>

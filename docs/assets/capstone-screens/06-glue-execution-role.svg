@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Glue execution role screen</title>
+  <desc id="desc">Instructional mock screen showing Glue job and crawler execution role.</desc>
+  <rect width="1200" height="720" fill="#f6f7f9"/>
+  <rect width="1200" height="56" fill="#232f3e"/>
+  <text x="28" y="36" fill="#ffffff" font-family="Arial, sans-serif" font-size="22" font-weight="700">AWS IAM - Glue role</text>
+  <text x="70" y="112" fill="#111827" font-family="Arial, sans-serif" font-size="30" font-weight="700">Role: glue-claims-etl-role</text>
+  <rect x="70" y="150" width="500" height="430" rx="8" fill="#ffffff" stroke="#d1d5db"/>
+  <text x="100" y="195" fill="#111827" font-family="Arial, sans-serif" font-size="22" font-weight="700">Trust policy</text>
+  <rect x="100" y="225" width="420" height="82" rx="6" fill="#fef3c7" stroke="#f59e0b"/>
+  <text x="125" y="260" fill="#111827" font-family="Consolas, monospace" font-size="17">Service: glue.amazonaws.com</text>
+  <text x="125" y="286" fill="#374151" font-family="Arial, sans-serif" font-size="15">Glue job and crawler can assume this role.</text>
+  <rect x="630" y="150" width="500" height="430" rx="8" fill="#ffffff" stroke="#d1d5db"/>
+  <text x="660" y="195" fill="#111827" font-family="Arial, sans-serif" font-size="22" font-weight="700">Permission policy</text>
+  <text x="690" y="246" fill="#374151" font-family="Arial, sans-serif" font-size="17">s3:GetObject on bronze and scripts</text>
+  <text x="690" y="286" fill="#374151" font-family="Arial, sans-serif" font-size="17">s3:PutObject on silver output</text>
+  <text x="690" y="326" fill="#374151" font-family="Arial, sans-serif" font-size="17">glue:GetDatabase, CreateTable, UpdateTable</text>
+  <text x="690" y="366" fill="#374151" font-family="Arial, sans-serif" font-size="17">logs:CreateLogStream, logs:PutLogEvents</text>
+  <text x="690" y="406" fill="#374151" font-family="Arial, sans-serif" font-size="17">Optional KMS permissions if bucket uses KMS</text>
+  <rect x="70" y="620" width="1060" height="48" rx="6" fill="#fff7ed" stroke="#f97316"/>
+  <text x="98" y="650" fill="#9a3412" font-family="Arial, sans-serif" font-size="16">Explain: this role is shared by the Glue ETL job and crawler in the class project.</text>
+</svg>
